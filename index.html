@@ -124,6 +124,14 @@
     .toast { position:fixed;left:50%;bottom:23px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#152744;border:1px solid #355584;color:#e3edff;border-radius:10px;padding:11px 15px;font-size:12px;box-shadow:0 12px 35px #0008;transition:.25s;z-index:5; }
     .toast.show { opacity:1;transform:translate(-50%,0); }
     .footer-note { color:#63738b;text-align:center;font-size:10px;margin-top:20px; }
+    .role-picker { margin:0 0 18px;padding:14px 16px;border:1px solid var(--line);border-radius:13px;background:#0c1630;display:flex;align-items:center;justify-content:space-between;gap:18px; }
+    .role-copy { min-width:190px; }
+    .role-copy strong { display:block;color:#e8eeff;font-size:12px; }
+    .role-copy span { display:block;color:var(--muted);font-size:10px;margin-top:3px; }
+    .role-tabs { display:flex;align-items:center;gap:5px;padding:4px;border:1px solid #1f2d52;border-radius:999px;background:#080e1d; }
+    .role-tabs button { border:0;border-radius:999px;background:transparent;color:#8b9bc4;padding:7px 11px;font-size:10px;font-weight:650;white-space:nowrap;cursor:pointer; }
+    .role-tabs button:hover { color:#e8eeff; }
+    .role-tabs button[aria-pressed="true"] { background:#2f6bff;color:#fff;box-shadow:0 4px 12px #2f6bff35; }
     dialog { width:min(430px,calc(100% - 30px));border:1px solid #2a4162;border-radius:16px;background:#101d31;color:var(--text);padding:0;box-shadow:0 24px 90px #000b; }
     dialog::backdrop { background:#030711c9;backdrop-filter:blur(5px); }
     .dialog-inner { padding:20px; }
@@ -136,7 +144,7 @@
     .dialog-actions button { padding:9px 12px;border-radius:8px;border:1px solid #2b405c;background:#122039;cursor:pointer;font-size:11px; }
     .dialog-actions .confirm { border:0;background:#326ce7;font-weight:700; }
     @keyframes appear { from { opacity:0;transform:translateY(5px); } to { opacity:1;transform:none; } }
-    @media (max-width:760px) { main { margin-top:27px; }.room { grid-template-columns:1fr; }.side { display:grid;grid-template-columns:1fr 1fr; }.side .actions-card { grid-row:span 2; }.heading-row { align-items:flex-start;flex-direction:column;gap:13px; }.top-nav { display:none; } }
+    @media (max-width:760px) { main { margin-top:27px; }.room { grid-template-columns:1fr; }.side { display:grid;grid-template-columns:1fr 1fr; }.side .actions-card { grid-row:span 2; }.heading-row { align-items:flex-start;flex-direction:column;gap:13px; }.top-nav { display:none; }.role-picker { align-items:flex-start;flex-direction:column;gap:11px; }.role-tabs { max-width:100%;overflow-x:auto; } }
     @media (max-width:500px) { .topbar { height:58px; }.topbar-inner { width:calc(100% - 24px);gap:10px; }.workspace-name { display:none; }.top-right { gap:6px; }.top-chip { min-height:31px;padding:3px 8px;font-size:10px; }.profile-avatar { width:21px;height:21px; }.side { display:flex; }.messages { padding:16px 12px; }.room-header { padding:13px; }.context-strip { padding:10px 13px; }.composer { padding:12px; }.message { max-width:100%; }.issue-link { align-self:flex-start; } }
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important; } }
   </style>
@@ -158,8 +166,17 @@
     <a class="backlink" href="#room" aria-label="Back to inbox">← <span>Inbox</span></a>
     <div class="heading-row">
       <div><div class="eyebrow">Scoped agent authorization</div><h1>Agree on scope before work starts.</h1><p class="heading-sub">Review the agent’s plan, set boundaries, and keep the decision and delivery together.</p></div>
-      <a class="issue-link" href="https://github.com/ziki-dev/ziki/pull/49" target="_blank" rel="noreferrer">↗ &nbsp;PR #49 · Channel permissions API</a>
+      <span class="issue-link" id="context-link">PR #49 · Channel permissions API</span>
     </div>
+    <section class="role-picker" aria-label="Choose an agent role example">
+      <div class="role-copy"><strong>One room, different kinds of work</strong><span>Switch roles to see how the proposed scope and guardrails change.</span></div>
+      <div class="role-tabs" role="group" aria-label="Agent role examples">
+        <button type="button" data-role="reviewer" aria-pressed="true">Reviewer</button>
+        <button type="button" data-role="contributor" aria-pressed="false">Contributor</button>
+        <button type="button" data-role="triager" aria-pressed="false">Triager</button>
+        <button type="button" data-role="dispatcher" aria-pressed="false">Dispatcher</button>
+      </div>
+    </section>
     <section class="room" id="room" aria-label="Human agent handoff room">
       <article class="conversation">
         <div class="room-header">
@@ -202,6 +219,33 @@
       const dialog = document.querySelector('#dialog');
       const fields = document.querySelector('#dialog-fields');
       const toast = document.querySelector('#toast');
+      const roleExamples = {
+        reviewer: {
+          label:'reviewer agent', issue:'586', related:'Pull request #49', kind:'Review offer', context:'PR #49 · Channel permissions API', title:'Review plan', message:'Can I review PR #49? It changes the channel permissions API. I’ll focus on authorization behavior and regression coverage.', estimate:'About 15 minutes', confidence:'High · 0.88', risk:'Private channel access', needs:'Inspect linked repository', approve:'Approve review',
+          safety:'Approval authorizes review and reporting only. It does not grant merge permission.', human:'Approved. Please check authorization and regression coverage, then report your findings here. Don’t modify files or merge.', agent:'Understood. I’ll inspect the repository, check authorization and regression coverage, and report evidence here. No file changes or merge.', record:'Authorized: inspect and report · No file changes · No merge', approvedTitle:'Approved · review can start', approvedCopy:'Plan and guardrails recorded in this room.',
+          questionTitle:'Ask SERGE about this review', questionDescription:'Clarify the review plan for PR #49. Your question stays with this request.', questionReply:'I’ll clarify the review scope or repository access before proceeding. PR #49 stays unreviewed until you approve.',
+          guards:[{text:'Inspect the linked repository',checked:true},{text:'Report findings in this room',checked:true},{text:'Do not modify files',checked:true},{text:'Do not merge the pull request',checked:true}]
+        },
+        contributor: {
+          label:'contributor agent', issue:'141', related:'Code change proposal', kind:'Implementation offer', context:'Issue #141 · Duplicate assignment notifications', title:'Implementation plan', message:'Can I fix the duplicate assignment notifications? I’ll trace the assignment event handling, make a focused change, and add regression coverage.', estimate:'About 45 minutes', confidence:'Medium · 0.76', risk:'Could affect assignment event ordering', needs:'Edit issue service and run tests', approve:'Approve implementation',
+          safety:'Approval covers the agreed code changes and checks. It does not authorize deployment.', human:'Approved. Make the focused assignment-notification change and add regression tests. Don’t deploy; report the files changed and test results here.', agent:'Understood. I’ll keep the change focused, add regression coverage, and return the changed files and test results. I won’t deploy.', record:'Authorized: focused fix and tests · No deployment', approvedTitle:'Approved · implementation can start', approvedCopy:'Code scope and deployment boundary recorded.',
+          questionTitle:'Ask SERGE about this implementation', questionDescription:'Clarify the change or test expectations for issue #141. Your question stays with this request.', questionReply:'I’ll clarify the implementation scope or test expectations before changing code. Issue #141 stays untouched until you approve.',
+          guards:[{text:'Limit changes to assignment notifications',checked:true},{text:'Add regression tests',checked:true},{text:'Do not change the public API',checked:true},{text:'Do not deploy',checked:true}]
+        },
+        triager: {
+          label:'triager agent', issue:'312', related:'Possible duplicate #308', kind:'Duplicate triage', context:'Issue #312 · Possible duplicate of #308', title:'Triage recommendation', message:'Can I compare issue #312 with #308? I’ll check their reproduction steps, affected versions, and error details, then explain whether they look like duplicates.', estimate:'About 10 minutes', confidence:'Medium · 0.81', risk:'A wrong duplicate decision could hide a distinct report', needs:'Compare both issue reports', approve:'Approve triage',
+          safety:'Approval authorizes a recommendation. It does not close or link issues.', human:'Approved. Compare both reports and explain the evidence for or against a duplicate. Don’t close or link either issue.', agent:'Understood. I’ll compare the reproduction details and versions, then post my reasoning here. I won’t change either issue’s status or links.', record:'Authorized: compare and recommend · No issue changes', approvedTitle:'Approved · triage can start', approvedCopy:'Triage scope and issue-change boundary recorded.',
+          questionTitle:'Ask SERGE about this triage', questionDescription:'Clarify what evidence to compare for issues #312 and #308. Your question stays with this request.', questionReply:'I’ll clarify which report details or versions to compare. I won’t close or link either issue without your approval.',
+          guards:[{text:'Compare reproduction steps and versions',checked:true},{text:'Explain evidence for and against a duplicate',checked:true},{text:'Do not close or link issues',checked:true},{text:'Preserve any distinct reproduction details',checked:true}]
+        },
+        dispatcher: {
+          label:'dispatcher agent', issue:'204', related:'Routing proposal', kind:'Assignment request', context:'Issue #204 · Android build failure', title:'Routing plan', message:'Can I route issue #204 to an available Android agent? I’ll check current assignments and required access, then propose one suitable agent without interrupting the current owner.', estimate:'About 5 minutes', confidence:'High · 0.89', risk:'A conflicting reassignment could interrupt active work', needs:'Check agent availability and access', approve:'Approve routing',
+          safety:'Approval authorizes this routing action only. It does not accept or start the assignee’s work.', human:'Approved. Route this issue to one available Android agent with the needed access. Keep the current owner in the loop and don’t change priority.', agent:'Understood. I’ll check availability and access, route to one suitable agent, and report the assignment here. The assignee still needs to accept the work.', record:'Authorized: route to one suitable agent · No priority change', approvedTitle:'Approved · routing can start', approvedCopy:'Assignment scope and current-owner boundary recorded.',
+          questionTitle:'Ask SERGE about this routing plan', questionDescription:'Clarify the assignment criteria for issue #204. Your question stays with this request.', questionReply:'I’ll clarify the availability or access criteria before routing. Issue #204 won’t be reassigned until you approve.',
+          guards:[{text:'Check availability and required access first',checked:true},{text:'Route to one suitable agent only',checked:true},{text:'Keep the current owner informed',checked:true},{text:'Do not change issue priority',checked:true}]
+        }
+      };
+      let activeRole = 'reviewer';
 
       function updateTimer() {
         const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -225,6 +269,41 @@
       function setTrail(title, copy) {
         document.querySelector('#timeline-next').textContent = title;
         document.querySelector('#timeline-copy').textContent = copy;
+      }
+      function setRole(roleName) {
+        const role = roleExamples[roleName];
+        if (!role) return;
+        activeRole = roleName;
+        decided = false; paused = false; heldOnce = false; seconds = 42; windowDuration = 60;
+        setButtonsDisabled(false);
+        document.querySelectorAll('.role-tabs button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.role === roleName)));
+        document.querySelector('.room-title strong span').textContent = `· ${role.label}`;
+        const bubble = document.querySelector('.messages > .message .bubble');
+        bubble.firstChild.textContent = role.message;
+        document.querySelector('.proposal-head strong').textContent = role.title;
+        const values = document.querySelectorAll('.proposal-grid span');
+        [role.estimate, role.confidence, role.risk, role.needs].forEach((value, index) => values[index].textContent = value);
+        const context = document.querySelector('.context-strip');
+        context.children[0].innerHTML = `Issue <b>#${role.issue}</b>`;
+        context.children[2].innerHTML = `<b>${role.related}</b>`;
+        context.children[4].textContent = role.kind;
+        document.querySelector('#context-link').textContent = role.context;
+        document.querySelector('#approve').lastChild.textContent = role.approve;
+        document.querySelector('.safe-note span:last-child').textContent = role.safety;
+        document.querySelector('#thread-messages').replaceChildren();
+        document.querySelector('#guardrail-note').hidden = true;
+        const badge = document.querySelector('#proposal-badge');
+        badge.textContent = 'DECISION NEEDED'; badge.style.cssText = '';
+        document.querySelector('#room-status').textContent = 'Awaiting your decision';
+        timerLabel.textContent = 'Decision window · expires in';
+        timerCopy.textContent = 'No work starts until you approve. Offer timing is a deadline, not permission.';
+        setTrail('Owner decision pending', 'Questions and guardrails can be agreed here.');
+        const decisionMarker = document.querySelector('#timeline li:nth-child(2) span:first-child');
+        decisionMarker.className = 'pending'; decisionMarker.textContent = '◷';
+        const evidenceMarker = document.querySelector('#timeline li:nth-child(3) span:first-child');
+        evidenceMarker.className = 'pending'; evidenceMarker.textContent = '○';
+        status.textContent = 'Awaiting your decision';
+        updateTimer();
       }
       function notify(message) {
         toast.textContent = message;
@@ -285,13 +364,14 @@
           decided = true; paused = false;
           document.querySelector('#proposal-badge').textContent = 'APPROVED';
           document.querySelector('#proposal-badge').style.cssText = 'background:#12382f;color:#70e0b3;border-color:#27634e';
-          timerLabel.textContent = 'Decision recorded'; timerCopy.textContent = 'The agent can now accept the review and begin.';
+          timerLabel.textContent = 'Decision recorded'; timerCopy.textContent = 'The agent can now accept the authorized work and begin.';
           status.textContent = 'Approved · ready to start'; setButtonsDisabled(true);
-          addMessage('Approved. Please check authorization and regression coverage, then report your findings here. Don’t modify files or merge.', 'human');
-          addMessage('Understood. I’ll inspect the repository, check authorization and regression coverage, and report evidence here. No file changes or merge.', 'agent', 'SERGE · approved');
+          const role = roleExamples[activeRole];
+          addMessage(role.human, 'human');
+          addMessage(role.agent, 'agent', 'SERGE · approved');
           document.querySelector('#guardrail-note').hidden = false;
-          document.querySelector('#guardrail-note').textContent = 'Authorized: inspect and report · No file changes · No merge';
-          setTrail('Approved · review can start', 'Plan and guardrails recorded in this room.');
+          document.querySelector('#guardrail-note').textContent = role.record;
+          setTrail(role.approvedTitle, role.approvedCopy);
           document.querySelector('#timeline li:nth-child(2) .check').textContent = '✓';
           document.querySelector('#timeline li:nth-child(2) .check').className = 'check';
           document.querySelector('#timeline li:nth-child(3) .pending').textContent = '◷';
@@ -312,7 +392,7 @@
         } else if (action === 'question') {
           const question = value.trim(); if (!question) { notify('Write a question first.'); return; }
           dialog.close(); addMessage(question, 'human');
-          addMessage('I’ll clarify before taking action. The offer remains open while we discuss it.', 'agent', 'SERGE · just now');
+          addMessage(roleExamples[activeRole].questionReply, 'agent', 'SERGE · just now');
           status.textContent = 'Question in progress'; setTrail('Clarifying request', 'Work remains unclaimed while you discuss.');
           notify('Question added to the request.'); return;
         } else if (action === 'pass') {
@@ -329,8 +409,11 @@
       updateTimer();
       document.querySelector('#hold').addEventListener('click', () => commit('hold'));
       document.querySelector('#approve').addEventListener('click', () => commit('approve'));
-      document.querySelector('#adjust').addEventListener('click', () => openDialog('Set the boundaries', 'Choose what SERGE is authorized to do in this review. Nothing starts until you approve.', {action:'adjust',kind:'checkbox',options:[{text:'Inspect the linked repository',checked:true},{text:'Report findings in this room',checked:true},{text:'Do not modify files',checked:true},{text:'Do not merge the pull request',checked:true}]}));
-      document.querySelector('#ask').addEventListener('click', () => openDialog('Ask SERGE a question', 'Keep the question attached to PR #49 and this approval request.', {action:'question',kind:'textarea',label:'Your question',placeholder:'What would you like to clarify?'}));
+      document.querySelector('#adjust').addEventListener('click', () => openDialog('Set the boundaries', `Choose what SERGE is authorized to do in this ${activeRole} request. Nothing starts until you approve.`, {action:'adjust',kind:'checkbox',options:roleExamples[activeRole].guards}));
+      document.querySelector('#ask').addEventListener('click', () => {
+        const role = roleExamples[activeRole];
+        openDialog(role.questionTitle, role.questionDescription, {action:'question',kind:'textarea',label:'Your question',placeholder:'What would you like SERGE to clarify?'});
+      });
       document.querySelector('#pass').addEventListener('click', () => openDialog('Pass on this offer?', 'The agent will not accept this work. You can add a note for context.', {action:'pass',kind:'textarea',label:'Optional note',placeholder:'Why are you passing?'}));
       document.querySelector('#dialog-cancel').addEventListener('click', () => dialog.close());
       document.querySelector('#dialog-form').addEventListener('submit', event => {
@@ -346,6 +429,8 @@
         status.textContent = 'Reply sent'; setTrail('Conversation active', 'The request remains unclaimed until approval.');
         setTimeout(() => addMessage('Thanks, that helps. I’ll wait for your approval before accepting the offer.', 'agent', 'SERGE · just now'), 600);
       });
+      document.querySelectorAll('.role-tabs button').forEach(button => button.addEventListener('click', () => setRole(button.dataset.role)));
+      setRole('reviewer');
     })();
   </script>
 </body>
