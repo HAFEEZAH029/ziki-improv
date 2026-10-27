@@ -30,13 +30,21 @@
     body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 52% -18%, #182b4b 0, transparent 42%), var(--page); color: var(--text); }
     button, textarea { font: inherit; }
     button { color: inherit; }
-    .topbar { height: 68px; border-bottom: 1px solid rgba(125,153,194,.14); display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 76px); background: rgba(8,14,29,.78); }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 720; letter-spacing: -.03em; }
-    .brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 9px; background: linear-gradient(145deg,#5790ff,#2760e8); box-shadow: 0 5px 20px #2864ef40; font-size: 15px; }
-    .brand-name { font-size: 17px; }
-    .brand-context { color: var(--subtle); font-weight: 500; font-size: 13px; letter-spacing: 0; margin-left: 4px; }
-    .top-right { display:flex; align-items:center; gap: 14px; color: var(--muted); font-size: 12px; }
-    .demo-tag { border: 1px solid var(--line-bright); padding: 6px 9px; border-radius: 999px; color: #b7c9e8; background:#101d32; }
+    .topbar { position:sticky;top:0;z-index:10;height:62px;border-bottom:1px solid var(--line);background:rgba(7,13,31,.94);backdrop-filter:blur(10px); }
+    .topbar-inner { width:min(100% - 36px,1180px);height:100%;margin:auto;display:flex;align-items:center;gap:16px; }
+    .brand { display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.03em;flex:none; }
+    .brand-mark { display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:linear-gradient(145deg,#5790ff,#2760e8);box-shadow:0 5px 20px #2864ef40;font-size:14px; }
+    .brand-name { font-size:18px; }
+    .workspace-name { color:#e8eeff;font-size:12px;font-weight:600;white-space:nowrap;border-left:1px solid #2a3a66;padding-left:15px; }
+    .top-nav { display:flex;align-items:center;gap:4px;margin-left:3px;white-space:nowrap; }
+    .top-nav span { padding:6px 11px;border-radius:999px;color:#8b9bc4;font-size:11px;font-weight:550; }
+    .top-nav .current { color:#8eb1ff;background:#14244a; }
+    .top-spacer { flex:1; }
+    .top-right { display:flex;align-items:center;gap:8px;flex:none; }
+    .top-chip { display:flex;align-items:center;gap:7px;min-height:33px;padding:4px 10px;border:1px solid #2a3a66;border-radius:999px;color:#e8eeff;background:#0c1630;font-size:11px;font-weight:650;white-space:nowrap; }
+    .points-chip { color:#f5c542;background:#2b2410;border-color:#4a3b12; }
+    .points-star { font-size:13px; }
+    .profile-avatar { display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:linear-gradient(135deg,#c8102e,#7a0b1c);color:white;font-size:10px;font-weight:750; }
     main { width: min(100% - 36px, 1030px); margin: 38px auto 56px; }
     .backlink { display:inline-flex; gap:8px; align-items:center; color:var(--muted); font-size:13px; text-decoration:none; margin-bottom:25px; }
     .backlink:hover { color:var(--text); }
@@ -128,15 +136,23 @@
     .dialog-actions button { padding:9px 12px;border-radius:8px;border:1px solid #2b405c;background:#122039;cursor:pointer;font-size:11px; }
     .dialog-actions .confirm { border:0;background:#326ce7;font-weight:700; }
     @keyframes appear { from { opacity:0;transform:translateY(5px); } to { opacity:1;transform:none; } }
-    @media (max-width:760px) { main { margin-top:27px; }.room { grid-template-columns:1fr; }.side { display:grid;grid-template-columns:1fr 1fr; }.side .actions-card { grid-row:span 2; }.heading-row { align-items:flex-start;flex-direction:column;gap:13px; } }
-    @media (max-width:500px) { .topbar { height:58px;padding:0 17px; }.brand-context { display:none; }.top-right { gap:8px; }.demo-tag { font-size:10px; }.side { display:flex; }.messages { padding:16px 12px; }.room-header { padding:13px; }.context-strip { padding:10px 13px; }.composer { padding:12px; }.message { max-width:100%; }.issue-link { align-self:flex-start; } }
+    @media (max-width:760px) { main { margin-top:27px; }.room { grid-template-columns:1fr; }.side { display:grid;grid-template-columns:1fr 1fr; }.side .actions-card { grid-row:span 2; }.heading-row { align-items:flex-start;flex-direction:column;gap:13px; }.top-nav { display:none; } }
+    @media (max-width:500px) { .topbar { height:58px; }.topbar-inner { width:calc(100% - 24px);gap:10px; }.workspace-name { display:none; }.top-right { gap:6px; }.top-chip { min-height:31px;padding:3px 8px;font-size:10px; }.profile-avatar { width:21px;height:21px; }.side { display:flex; }.messages { padding:16px 12px; }.room-header { padding:13px; }.context-strip { padding:10px 13px; }.composer { padding:12px; }.message { max-width:100%; }.issue-link { align-self:flex-start; } }
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important; } }
   </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">z</span><span class="brand-name">ziki</span><span class="brand-context">/ concept lab</span></div>
-    <div class="top-right"><span>Human + agent collaboration</span><span class="demo-tag">Interactive prototype</span></div>
+    <div class="topbar-inner">
+      <div class="brand" aria-label="Ziki"><span class="brand-mark">z</span><span class="brand-name">ziki</span></div>
+      <span class="workspace-name">Hafeezah’s workspace</span>
+      <div class="top-nav" aria-label="Decorative workspace sections"><span class="current">Inbox</span><span>Issues</span><span>Agents</span></div>
+      <span class="top-spacer"></span>
+      <div class="top-right" aria-label="Sample profile and points">
+        <span class="top-chip points-chip"><span class="points-star">★</span>1,344 pts</span>
+        <span class="top-chip"><span class="profile-avatar">H</span>Hafeezah</span>
+      </div>
+    </div>
   </header>
   <main>
     <a class="backlink" href="#room" aria-label="Back to inbox">← <span>Inbox</span></a>
