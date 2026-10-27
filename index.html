@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080e1d">
+  <meta name="description" content="A concept for a shared decision room between a human and an AI agent on Ziki.">
+  <title>Handoff Room — Ziki concept</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #080e1d;
+      --surface: #0d1729;
+      --surface-raised: #111e33;
+      --surface-soft: #0a1425;
+      --line: #1e2e47;
+      --line-bright: #2b4161;
+      --text: #f3f6fc;
+      --muted: #9baac0;
+      --subtle: #6f819d;
+      --blue: #4a82ff;
+      --blue-light: #8eb1ff;
+      --green: #43d6a0;
+      --amber: #f3bd65;
+      --red: #ff7d8b;
+      --radius: 16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 52% -18%, #182b4b 0, transparent 42%), var(--page); color: var(--text); }
+    button, textarea { font: inherit; }
+    button { color: inherit; }
+    .topbar { height: 68px; border-bottom: 1px solid rgba(125,153,194,.14); display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 76px); background: rgba(8,14,29,.78); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 720; letter-spacing: -.03em; }
+    .brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 9px; background: linear-gradient(145deg,#5790ff,#2760e8); box-shadow: 0 5px 20px #2864ef40; font-size: 15px; }
+    .brand-name { font-size: 17px; }
+    .brand-context { color: var(--subtle); font-weight: 500; font-size: 13px; letter-spacing: 0; margin-left: 4px; }
+    .top-right { display:flex; align-items:center; gap: 14px; color: var(--muted); font-size: 12px; }
+    .demo-tag { border: 1px solid var(--line-bright); padding: 6px 9px; border-radius: 999px; color: #b7c9e8; background:#101d32; }
+    main { width: min(100% - 36px, 1030px); margin: 38px auto 56px; }
+    .backlink { display:inline-flex; gap:8px; align-items:center; color:var(--muted); font-size:13px; text-decoration:none; margin-bottom:25px; }
+    .backlink:hover { color:var(--text); }
+    .heading-row { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:22px; }
+    .eyebrow { color:var(--blue-light); text-transform:uppercase; letter-spacing:.13em; font-weight:700; font-size:10px; margin-bottom:8px; }
+    h1 { font-size:clamp(24px,3.5vw,34px); letter-spacing:-.045em; margin:0; line-height:1.12; }
+    .heading-sub { color:var(--muted); margin:9px 0 0; font-size:14px; }
+    .issue-link { color:#b8ceff; border:1px solid var(--line-bright); border-radius:9px; padding:9px 12px; white-space:nowrap; font-size:12px; text-decoration:none; background:#101c30; }
+    .issue-link:hover { border-color:var(--blue); }
+    .room { display:grid; grid-template-columns:minmax(0,1fr) 278px; gap:16px; align-items:start; }
+    .conversation, .side-card { border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(155deg,rgba(17,30,51,.96),rgba(11,21,37,.98)); box-shadow:0 18px 55px #00000024; }
+    .conversation { overflow:hidden; }
+    .room-header { min-height:69px; display:flex; justify-content:space-between; align-items:center; padding:15px 19px; border-bottom:1px solid var(--line); }
+    .room-title { display:flex; align-items:center; gap:11px; }
+    .avatar { width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#193465;border:1px solid #345caa;color:#c8d9ff;font-weight:750;font-size:12px; }
+    .room-title strong { display:block; font-size:13px; }
+    .room-title small { color:var(--muted); display:block; font-size:11px; margin-top:3px; }
+    .live { color:#9db0c9; font-size:11px; display:flex; align-items:center; gap:7px; }
+    .live-dot { width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 10px #43d6a077; }
+    .context-strip { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:11px 19px; background:#0a1425; border-bottom:1px solid var(--line); color:var(--muted); font-size:11px; }
+    .context-strip .sep { color:#42536d; }
+    .context-strip b { color:#d8e3f4; font-weight:600; }
+    .messages { padding:20px 19px 15px; display:flex; flex-direction:column; gap:17px; min-height:346px; }
+    .message { display:flex; gap:10px; max-width:94%; animation:appear .25s ease-out; }
+    .message.human { align-self:flex-end; flex-direction:row-reverse; }
+    .mini-avatar { flex:0 0 27px; width:27px;height:27px;border-radius:9px;display:grid;place-items:center;font-size:10px;font-weight:750;background:#162846;color:#b7cbef;border:1px solid #2b4161; }
+    .human .mini-avatar { background:#233a67;border-color:#395d9f;color:#d8e5ff; }
+    .bubble { border:1px solid #243752; background:#111e32; border-radius:4px 13px 13px 13px; padding:11px 13px; font-size:12px; line-height:1.58; color:#dce5f3; }
+    .human .bubble { background:#172b4c;border-color:#2d4c7e;border-radius:13px 4px 13px 13px; }
+    .message-meta { color:var(--subtle);font-size:10px;margin:0 2px 5px; }
+    .message.human .message-meta { text-align:right; }
+    .proposal { width:100%; margin-top:10px; background:#0c182a; border:1px solid #243a59; border-radius:11px; padding:12px; }
+    .proposal-head { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px; }
+    .proposal-head strong { font-size:12px; }
+    .badge { border-radius:999px; padding:4px 7px; font-size:9px; font-weight:700; letter-spacing:.03em; background:#362c1c;color:#f4c879;border:1px solid #59472a; }
+    .proposal-grid { display:grid;grid-template-columns:1fr 1fr;gap:9px 14px; }
+    .proposal-grid div { min-width:0; }
+    .proposal-grid label { display:block;color:var(--subtle);font-size:9px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px; }
+    .proposal-grid span { color:#d5e0ef;font-size:11px; }
+    .approval-note { margin-top:10px; padding:8px 9px; border-radius:8px; border:1px solid #37548a; background:#152849; color:#c3d6ff; font-size:10px; }
+    .composer { padding:13px 17px 16px; border-top:1px solid var(--line); background:#0a1424; }
+    .composer textarea { display:block;width:100%;min-height:61px;resize:vertical;border:1px solid #253852;background:#0d192b;border-radius:10px;padding:11px 12px;color:var(--text);outline:none;font-size:12px;line-height:1.5; }
+    .composer textarea:focus { border-color:#4778d2;box-shadow:0 0 0 3px #3775e51b; }
+    .composer textarea::placeholder { color:#74859e; }
+    .composer-foot { display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px; }
+    .composer-hint { color:var(--subtle);font-size:10px; }
+    .send-btn, .action { border:0;border-radius:9px;cursor:pointer;transition:transform .15s,filter .15s,border-color .15s; }
+    .send-btn { padding:9px 14px;background:#326ce7;color:white;font-size:11px;font-weight:700;box-shadow:0 5px 16px #2460df35; }
+    .send-btn:hover,.action:hover { filter:brightness(1.12);transform:translateY(-1px); }
+    .side { display:flex;flex-direction:column;gap:13px; }
+    .side-card { padding:16px; }
+    .side-heading { color:#dce6f4;font-size:12px;font-weight:700;margin:0 0 13px; }
+    .timer-card { background:linear-gradient(150deg,#172640,#101c30); }
+    .timer-row { display:flex;justify-content:space-between;align-items:center; }
+    .timer-label { color:var(--muted);font-size:11px; }
+    .timer { font-variant-numeric:tabular-nums;font-size:25px;font-weight:700;letter-spacing:-.04em;color:#f4c879; }
+    .timer.paused { color:var(--green); }
+    .timer.expired { color:var(--red); }
+    .progress-track { height:4px;background:#283951;border-radius:99px;overflow:hidden;margin:11px 0 8px; }
+    .progress { height:100%;width:75%;background:linear-gradient(90deg,#f4c879,#e99a59);border-radius:99px;transition:width .5s linear; }
+    .timer-copy { color:var(--subtle);font-size:10px;line-height:1.5;margin:0; }
+    .action-list { display:grid;gap:7px; }
+    .action { width:100%;min-height:37px;text-align:left;padding:9px 11px;font-size:11px;font-weight:650;display:flex;align-items:center;gap:9px; }
+    .action .icon { width:17px;text-align:center;font-size:13px; }
+    .action.primary { background:#326ce7;color:white; }
+    .action.secondary { border:1px solid #2b405c;background:#122039;color:#d5e2f5; }
+    .action.tertiary { background:transparent;color:#aab8cc;border:1px solid transparent; }
+    .action.danger { border:1px solid #49303b;background:#241a26;color:#f1a4ad; }
+    .action:disabled { opacity:.45;cursor:not-allowed;transform:none; }
+    .safe-note { display:flex;gap:9px;align-items:flex-start;border-top:1px solid var(--line);margin-top:13px;padding-top:12px;color:var(--muted);font-size:10px;line-height:1.5; }
+    .safe-note span:first-child { color:var(--green);font-size:13px; }
+    .timeline { list-style:none;padding:0;margin:0;display:grid;gap:12px; }
+    .timeline li { display:grid;grid-template-columns:16px 1fr;gap:8px;color:var(--muted);font-size:10px;line-height:1.45; }
+    .timeline .check { color:var(--green);font-size:12px; }
+    .timeline .pending { color:#6980a0;font-size:12px; }
+    .timeline b { display:block;color:#d1dced;font-weight:600;font-size:10px;margin-bottom:2px; }
+    .toast { position:fixed;left:50%;bottom:23px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#152744;border:1px solid #355584;color:#e3edff;border-radius:10px;padding:11px 15px;font-size:12px;box-shadow:0 12px 35px #0008;transition:.25s;z-index:5; }
+    .toast.show { opacity:1;transform:translate(-50%,0); }
+    .footer-note { color:#63738b;text-align:center;font-size:10px;margin-top:20px; }
+    dialog { width:min(430px,calc(100% - 30px));border:1px solid #2a4162;border-radius:16px;background:#101d31;color:var(--text);padding:0;box-shadow:0 24px 90px #000b; }
+    dialog::backdrop { background:#030711c9;backdrop-filter:blur(5px); }
+    .dialog-inner { padding:20px; }
+    .dialog-inner h2 { font-size:17px;letter-spacing:-.03em;margin:0 0 7px; }
+    .dialog-inner p { color:var(--muted);font-size:12px;line-height:1.55;margin:0 0 14px; }
+    .dialog-inner label { display:block;font-size:10px;color:#aab8cc;margin:12px 0 6px; }
+    .dialog-inner textarea,.dialog-inner input { width:100%;background:#0b1627;border:1px solid #2a405e;border-radius:9px;padding:10px;color:var(--text);outline:none;font-size:12px; }
+    .dialog-inner textarea { min-height:86px;resize:vertical; }
+    .dialog-actions { display:flex;justify-content:flex-end;gap:8px;margin-top:16px; }
+    .dialog-actions button { padding:9px 12px;border-radius:8px;border:1px solid #2b405c;background:#122039;cursor:pointer;font-size:11px; }
+    .dialog-actions .confirm { border:0;background:#326ce7;font-weight:700; }
+    @keyframes appear { from { opacity:0;transform:translateY(5px); } to { opacity:1;transform:none; } }
+    @media (max-width:760px) { main { margin-top:27px; }.room { grid-template-columns:1fr; }.side { display:grid;grid-template-columns:1fr 1fr; }.side .actions-card { grid-row:span 2; }.heading-row { align-items:flex-start;flex-direction:column;gap:13px; } }
+    @media (max-width:500px) { .topbar { height:58px;padding:0 17px; }.brand-context { display:none; }.top-right { gap:8px; }.demo-tag { font-size:10px; }.side { display:flex; }.messages { padding:16px 12px; }.room-header { padding:13px; }.context-strip { padding:10px 13px; }.composer { padding:12px; }.message { max-width:100%; }.issue-link { align-self:flex-start; } }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">z</span><span class="brand-name">ziki</span><span class="brand-context">/ concept lab</span></div>
+    <div class="top-right"><span>Human + agent collaboration</span><span class="demo-tag">Interactive prototype</span></div>
+  </header>
+  <main>
+    <a class="backlink" href="#room" aria-label="Back to inbox">← <span>Inbox</span></a>
+    <div class="heading-row">
+      <div><div class="eyebrow">Scoped agent authorization</div><h1>Agree on scope before work starts.</h1><p class="heading-sub">Review the agent’s plan, set boundaries, and keep the decision and delivery together.</p></div>
+      <a class="issue-link" href="https://github.com/ziki-dev/ziki/pull/49" target="_blank" rel="noreferrer">↗ &nbsp;PR #49 · Channel permissions API</a>
+    </div>
+    <section class="room" id="room" aria-label="Human agent handoff room">
+      <article class="conversation">
+        <div class="room-header">
+          <div class="room-title"><div class="avatar">S</div><div><strong>SERGE <span style="font-weight:450;color:#8295b1">· reviewer agent</span></strong><small>Work is paused until you authorize a scope</small></div></div>
+          <div class="live"><span class="live-dot"></span><span id="room-status">Awaiting your decision</span></div>
+        </div>
+        <div class="context-strip"><span>Issue <b>#586</b></span><span class="sep">/</span><span>Pull request <b>#49</b></span><span class="sep">/</span><span>Review offer</span></div>
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="message">
+            <div class="mini-avatar">S</div><div><div class="message-meta">SERGE · just now</div><div class="bubble">Can I review PR #49? It changes the channel permissions API. I’ll focus on authorization behavior and regression coverage.<div class="proposal"><div class="proposal-head"><strong>Review plan</strong><span class="badge" id="proposal-badge">DECISION NEEDED</span></div><div class="proposal-grid"><div><label>Estimate</label><span>About 15 minutes</span></div><div><label>Confidence</label><span>High · 0.88</span></div><div><label>Risk</label><span>Private channel access</span></div><div><label>Needs</label><span>Inspect linked repository</span></div></div><div class="approval-note" id="guardrail-note" hidden></div></div></div></div>
+          </div>
+          <div id="thread-messages"></div>
+        </div>
+        <form class="composer" id="message-form"><textarea id="message-input" placeholder="Ask a question or add context…" aria-label="Write a message"></textarea><div class="composer-foot"><span class="composer-hint">Your reply stays attached to this request.</span><button class="send-btn" type="submit">Send reply&nbsp; ↗</button></div></form>
+      </article>
+      <aside class="side" aria-label="Request actions and status">
+        <section class="side-card"><h2 class="side-heading">Authorization state</h2><div class="timer-row"><span class="timer-label" id="timer-label">Decision window · expires in</span><span class="timer" id="timer">00:42</span></div><div class="progress-track"><div class="progress" id="progress"></div></div><p class="timer-copy" id="timer-copy">No work starts until you approve. Offer timing is a deadline, not permission.</p></section>
+        <section class="side-card actions-card"><h2 class="side-heading">Set the authorization</h2><div class="action-list"><button class="action primary" id="approve"><span class="icon">✓</span>Approve review</button><button class="action secondary" id="adjust"><span class="icon">⊙</span>Adjust guardrails</button><button class="action secondary" id="hold"><span class="icon">Ⅱ</span>Request more time</button><button class="action tertiary" id="ask"><span class="icon">?</span>Ask a question</button><button class="action danger" id="pass"><span class="icon">×</span>Pass on this offer</button></div><div class="safe-note"><span>◈</span><span>Approval authorizes the agreed review scope only. It does not grant merge permission.</span></div></section>
+        <section class="side-card"><h2 class="side-heading">Decision &amp; delivery record</h2><ol class="timeline" id="timeline"><li><span class="check">✓</span><div><b>Agent proposed a scope</b>Plan, estimate, confidence, risk, and requested access.</div></li><li><span class="pending">◷</span><div><b id="timeline-next">Owner decision pending</b><span id="timeline-copy">Questions and guardrails can be agreed here.</span></div></li><li><span class="pending">○</span><div><b>Progress &amp; evidence</b>Updates, findings, and test results stay with this request.</div></li></ol></section>
+      </aside>
+    </section>
+    <p class="footer-note">Concept prototype · Actions are simulated locally and do not call Ziki or accept real work.</p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="dialog"><form class="dialog-inner" id="dialog-form" method="dialog"><h2 id="dialog-title"></h2><p id="dialog-description"></p><div id="dialog-fields"></div><div class="dialog-actions"><button type="button" id="dialog-cancel">Cancel</button><button class="confirm" id="dialog-confirm" value="confirm">Confirm</button></div></form></dialog>
+  <script>
+    (() => {
+      let seconds = 42;
+      let windowDuration = 60;
+      let paused = false;
+      let decided = false;
+      let heldOnce = false;
+      let toastTimer;
+      const timer = document.querySelector('#timer');
+      const progress = document.querySelector('#progress');
+      const timerLabel = document.querySelector('#timer-label');
+      const timerCopy = document.querySelector('#timer-copy');
+      const status = document.querySelector('#room-status');
+      const thread = document.querySelector('#thread-messages');
+      const dialog = document.querySelector('#dialog');
+      const fields = document.querySelector('#dialog-fields');
+      const toast = document.querySelector('#toast');
+
+      function updateTimer() {
+        const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        timer.textContent = `${mins}:${secs}`;
+        timer.classList.toggle('paused', paused);
+        timer.classList.toggle('expired', seconds <= 0 && !decided);
+        progress.style.width = `${Math.min(100, Math.max(0, seconds / windowDuration * 100))}%`;
+        if (!paused && seconds <= 0 && !decided) {
+          timerLabel.textContent = 'Offer expired';
+          timerCopy.textContent = 'This request needs to be renewed before work can start.';
+          status.textContent = 'Offer expired';
+          setButtonsDisabled(true);
+          setTrail('Offer expired', 'The agent did not accept the request.');
+        }
+      }
+      function setButtonsDisabled(disabled) {
+        document.querySelectorAll('.action').forEach(button => button.disabled = disabled);
+        document.querySelector('#message-input').disabled = disabled;
+      }
+      function setTrail(title, copy) {
+        document.querySelector('#timeline-next').textContent = title;
+        document.querySelector('#timeline-copy').textContent = copy;
+      }
+      function notify(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+      }
+      function addMessage(text, who = 'human', meta = 'You · just now') {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message ${who}`;
+        const avatar = document.createElement('div');
+        avatar.className = 'mini-avatar';
+        avatar.textContent = who === 'human' ? 'Y' : 'S';
+        const body = document.createElement('div');
+        const metadata = document.createElement('div');
+        metadata.className = 'message-meta';
+        metadata.textContent = meta;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+        body.append(metadata, bubble);
+        wrapper.append(avatar, body);
+        thread.append(wrapper);
+        wrapper.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }
+      function openDialog(title, description, config) {
+        document.querySelector('#dialog-title').textContent = title;
+        document.querySelector('#dialog-description').textContent = description;
+        fields.replaceChildren();
+        if (config.kind === 'textarea') {
+          const label = document.createElement('label'); label.textContent = config.label; label.htmlFor = 'dialog-value';
+          const input = document.createElement('textarea'); input.id = 'dialog-value'; input.placeholder = config.placeholder || ''; input.value = config.value || '';
+          fields.append(label, input);
+        } else if (config.kind === 'checkbox') {
+          config.options.forEach((option, index) => {
+            const label = document.createElement('label'); label.style.cssText = 'display:flex;align-items:center;gap:9px;color:#d5e2f5;font-size:11px;margin:10px 0';
+            const input = document.createElement('input'); input.type = 'checkbox'; input.checked = option.checked; input.value = option.text; input.style.width = 'auto'; input.id = `guard-${index}`;
+            label.append(input, document.createTextNode(option.text)); fields.append(label);
+          });
+        }
+        dialog.dataset.action = config.action;
+        dialog.showModal();
+        const first = fields.querySelector('textarea'); if (first) first.focus();
+      }
+      function commit(action, value) {
+        if (action === 'hold') {
+          if (!heldOnce) { seconds = 300; heldOnce = true; }
+          else { seconds = Math.max(seconds, 300); }
+          windowDuration = 300;
+          paused = false;
+          timerLabel.textContent = 'More time · demo';
+          timerCopy.textContent = 'The prototype simulates a five-minute extension. SERGE still cannot start without your authorization.';
+          status.textContent = 'Waiting on you';
+          addMessage('I’ve requested more time. In this prototype the offer is extended for five minutes; I have not accepted or started the work.', 'agent', 'SERGE · just now');
+          setTrail('Decision window extended · demo', 'No claim or work has started.');
+          notify('The prototype added five minutes to the decision window.');
+        } else if (action === 'approve') {
+          decided = true; paused = false;
+          document.querySelector('#proposal-badge').textContent = 'APPROVED';
+          document.querySelector('#proposal-badge').style.cssText = 'background:#12382f;color:#70e0b3;border-color:#27634e';
+          timerLabel.textContent = 'Decision recorded'; timerCopy.textContent = 'The agent can now accept the review and begin.';
+          status.textContent = 'Approved · ready to start'; setButtonsDisabled(true);
+          addMessage('Approved. Please check authorization and regression coverage, then report your findings here. Don’t modify files or merge.', 'human');
+          addMessage('Understood. I’ll inspect the repository, check authorization and regression coverage, and report evidence here. No file changes or merge.', 'agent', 'SERGE · approved');
+          document.querySelector('#guardrail-note').hidden = false;
+          document.querySelector('#guardrail-note').textContent = 'Authorized: inspect and report · No file changes · No merge';
+          setTrail('Approved · review can start', 'Plan and guardrails recorded in this room.');
+          document.querySelector('#timeline li:nth-child(2) .check').textContent = '✓';
+          document.querySelector('#timeline li:nth-child(2) .check').className = 'check';
+          document.querySelector('#timeline li:nth-child(3) .pending').textContent = '◷';
+          notify('Approval recorded. The agent can start.');
+        } else if (action === 'adjust') {
+          const selected = [...fields.querySelectorAll('input:checked')].map(node => node.value);
+          const extra = document.querySelector('#dialog-value')?.value.trim();
+          const terms = [...selected, extra].filter(Boolean).join('. ');
+          if (!terms) { notify('Choose or write at least one guardrail.'); return; }
+          dialog.close();
+          document.querySelector('#guardrail-note').hidden = false;
+          document.querySelector('#guardrail-note').textContent = `Requested guardrails: ${terms}`;
+          addMessage(`Before I approve, please follow these guardrails: ${terms}`, 'human');
+          addMessage('Got it. I’ve updated the plan to reflect your boundaries. Review the revised request and approve when ready.', 'agent', 'SERGE · just now');
+          status.textContent = 'Guardrails proposed';
+          setTrail('Guardrails updated', 'Waiting for your approval to begin.');
+          notify('Guardrails added to the handoff.'); return;
+        } else if (action === 'question') {
+          const question = value.trim(); if (!question) { notify('Write a question first.'); return; }
+          dialog.close(); addMessage(question, 'human');
+          addMessage('I’ll clarify before taking action. The offer remains open while we discuss it.', 'agent', 'SERGE · just now');
+          status.textContent = 'Question in progress'; setTrail('Clarifying request', 'Work remains unclaimed while you discuss.');
+          notify('Question added to the request.'); return;
+        } else if (action === 'pass') {
+          decided = true;
+          timerLabel.textContent = 'Offer declined'; timerCopy.textContent = 'The agent will not accept or start this work.';
+          status.textContent = 'Passed'; setButtonsDisabled(true);
+          addMessage(value ? `I’m passing on this offer. ${value}` : 'I’m passing on this offer.', 'human');
+          addMessage('Understood. I won’t accept the offer. I’ll leave the issue available for another agent.', 'agent', 'SERGE · just now');
+          setTrail('Passed on offer', 'Issue released back to the project.'); notify('Offer passed.');
+        }
+        if (dialog.open) dialog.close();
+      }
+      setInterval(() => { if (!paused && !decided && seconds > 0) seconds--; updateTimer(); }, 1000);
+      updateTimer();
+      document.querySelector('#hold').addEventListener('click', () => commit('hold'));
+      document.querySelector('#approve').addEventListener('click', () => commit('approve'));
+      document.querySelector('#adjust').addEventListener('click', () => openDialog('Set the boundaries', 'Choose what SERGE is authorized to do in this review. Nothing starts until you approve.', {action:'adjust',kind:'checkbox',options:[{text:'Inspect the linked repository',checked:true},{text:'Report findings in this room',checked:true},{text:'Do not modify files',checked:true},{text:'Do not merge the pull request',checked:true}]}));
+      document.querySelector('#ask').addEventListener('click', () => openDialog('Ask SERGE a question', 'Keep the question attached to PR #49 and this approval request.', {action:'question',kind:'textarea',label:'Your question',placeholder:'What would you like to clarify?'}));
+      document.querySelector('#pass').addEventListener('click', () => openDialog('Pass on this offer?', 'The agent will not accept this work. You can add a note for context.', {action:'pass',kind:'textarea',label:'Optional note',placeholder:'Why are you passing?'}));
+      document.querySelector('#dialog-cancel').addEventListener('click', () => dialog.close());
+      document.querySelector('#dialog-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const action = dialog.dataset.action;
+        const value = document.querySelector('#dialog-value')?.value || '';
+        commit(action, value);
+      });
+      document.querySelector('#message-form').addEventListener('submit', event => {
+        event.preventDefault(); const input = document.querySelector('#message-input'); const value = input.value.trim();
+        if (!value || decided) return;
+        addMessage(value, 'human'); input.value = '';
+        status.textContent = 'Reply sent'; setTrail('Conversation active', 'The request remains unclaimed until approval.');
+        setTimeout(() => addMessage('Thanks, that helps. I’ll wait for your approval before accepting the offer.', 'agent', 'SERGE · just now'), 600);
+      });
+    })();
+  </script>
+</body>
+</html>
