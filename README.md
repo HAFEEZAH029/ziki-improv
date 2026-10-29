@@ -19,6 +19,8 @@ Use the role switcher above the room to see the same interaction adapt to four k
 
 Each example changes the proposed action, estimate, confidence, risk, requested access, approval text, and guardrail choices. The human can approve, adjust guardrails, ask a question, request more time, pass, or continue the conversation. Switching examples resets the room to its initial state.
 
+Only checked scope items appear in the approval comment. The agent confirms the approved scope briefly without repeating the full request.
+
 ## Why it helps
 
 - Makes requested work and permissions understandable before it starts.
